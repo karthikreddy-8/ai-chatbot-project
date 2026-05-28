@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter
 from pydantic import BaseModel
-import requests
+import google.generativeai as genai
+import os
 
 # ============================================
 # ROUTER
@@ -12,11 +13,12 @@ router = APIRouter(
 )
 
 # ============================================
-# OLLAMA CONFIG
+# GEMINI CONFIG
 # ============================================
 
-OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
-OLLAMA_MODEL = "llama3"
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ============================================
 # REQUEST MODEL
@@ -26,7 +28,7 @@ class ChatRequest(BaseModel):
     message: str
 
 # ============================================
-# SIMPLE CHAT ROUTE
+# CHAT ROUTE
 # ============================================
 
 @router.post("")
@@ -42,40 +44,13 @@ async def simple_chat(request: ChatRequest):
                 "response": "Please enter a message."
             }
 
-        print("===================================")
-        print("USER MESSAGE:", user_message)
-        print("===================================")
-
-        # Send request to Ollama
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": OLLAMA_MODEL,
-                "prompt": user_message,
-                "stream": False
-            },
-            timeout=120
-        )
-
-        print("OLLAMA STATUS:", response.status_code)
-        print("OLLAMA RAW:", response.text)
-
-        # Convert JSON
-        data = response.json()
-
-        ai_response = data.get("response", "")
-
-        if not ai_response:
-
-            ai_response = "AI returned an empty response."
+        response = model.generate_content(user_message)
 
         return {
-            "response": ai_response
+            "response": response.text
         }
 
     except Exception as e:
-
-        print("CHAT ERROR:", str(e))
 
         return {
             "response": f"Error: {str(e)}"

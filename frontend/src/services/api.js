@@ -2,11 +2,11 @@ import axios from 'axios';
 
 /**
  * API Base URL
- * Backend runs on port 5000
+ * Render Backend URL
  */
 const api = axios.create({
 
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://ai-chatbot-backend-ht6g.onrender.com',
 
   headers: {
     'Content-Type': 'application/json',

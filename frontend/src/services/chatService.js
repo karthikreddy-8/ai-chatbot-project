@@ -7,7 +7,7 @@ export const chatService = {
   async createConversation() {
     console.log('[chatService] Creating new conversation');
     try {
-      const res = await api.post('/chat/conversations');
+      const res = await api.post('/api/chat/conversations');
       console.log('[chatService] Conversation created:', res.data);
       return res.data;
     } catch (err) {
@@ -22,7 +22,7 @@ export const chatService = {
   async getConversations() {
     console.log('[chatService] Fetching conversations');
     try {
-      const res = await api.get('/chat/conversations');
+      const res = await api.get('/api/chat/conversations');
       console.log('[chatService] Conversations fetched:', res.data?.length);
       return res.data;
     } catch (err) {
@@ -37,7 +37,7 @@ export const chatService = {
   async getConversation(id) {
     console.log('[chatService] Fetching conversation:', id);
     try {
-      const res = await api.get(`/chat/conversations/${id}`);
+      const res = await api.get(`/api/chat/conversations/${id}`);
       console.log('[chatService] Conversation fetched:', res.data);
       return res.data;
     } catch (err) {
@@ -62,7 +62,7 @@ export const chatService = {
     }
 
     try {
-      const res = await api.post(`/chat/conversations/${conversationId}/messages`, {
+      const res = await api.post(`/api/chat/conversations/${conversationId}/messages`, {
         content,
       });
       console.log('[chatService] Message sent successfully, AI response received');
@@ -81,7 +81,7 @@ export const chatService = {
   async renameConversation(id, title) {
     console.log('[chatService] Renaming conversation:', id, 'to:', title);
     try {
-      const res = await api.put(`/chat/conversations/${id}`, { title });
+      const res = await api.put(`/api/chat/conversations/${id}`, { title });
       console.log('[chatService] Conversation renamed successfully');
       return res.data;
     } catch (err) {
@@ -94,14 +94,14 @@ export const chatService = {
    * Delete a conversation
    */
   async deleteConversation(id) {
-    await api.delete(`/chat/conversations/${id}`);
+    await api.delete(`/api/chat/conversations/${id}`);
   },
 
   /**
    * Get AI provider health status
    */
   async getAIHealth() {
-    const res = await api.get('/chat/health');
+    const res = await api.get('/api/chat/health');
     return res.data;
   },
 };

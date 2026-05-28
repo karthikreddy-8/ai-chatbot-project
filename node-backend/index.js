@@ -1,16 +1,31 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+
+// ============================================
+// LOAD ENV
+// ============================================
 
 dotenv.config();
+
+// ============================================
+// TEST GEMINI KEY
+// ============================================
+
+console.log("GEMINI KEY:", process.env.GEMINI_API_KEY);
+
+// ============================================
+// EXPRESS APP
+// ============================================
 
 const app = express();
 
 // ============================================
 // Configuration
 // ============================================
+
 const PORT = process.env.PORT || 5000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 console.log(`
 ╔════════════════════════════════════════╗
@@ -21,116 +36,178 @@ console.log(`
 `);
 
 // ============================================
+// CHECK GEMINI API KEY
+// ============================================
+
+if (!process.env.GEMINI_API_KEY) {
+
+  console.error("❌ GEMINI_API_KEY Missing in .env");
+
+  process.exit(1);
+
+}
+
+console.log("✅ Gemini API Key Loaded");
+
+// ============================================
 // Middleware
 // ============================================
+
 app.use(cors({
   origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
-    'http://localhost:5000'
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
   ],
   credentials: true,
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Request logging
+app.use(express.json({
+  limit: "50mb",
+}));
+
+app.use(express.urlencoded({
+  limit: "50mb",
+  extended: true,
+}));
+
+// ============================================
+// Request Logger
+// ============================================
+
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${req.path}`
+  );
+
   next();
+
 });
 
 // ============================================
 // Routes
 // ============================================
-const chatRoutes = require('./routes/chat.routes');
-const authRoutes = require('./routes/auth.routes');
 
-app.use('/api/chat', chatRoutes);
-app.use('/api/auth', authRoutes);
+const chatRoutes = require("./routes/chat.routes");
+const authRoutes = require("./routes/auth.routes");
 
-// ============================================
-// Environment Configuration
-// ============================================
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const IS_PRODUCTION = NODE_ENV === 'production';
+app.use("/api/chat", chatRoutes);
+app.use("/api/auth", authRoutes);
 
 // ============================================
-// Health check endpoint
+// Health Check
 // ============================================
-app.get('/api/health', async (req, res) => {
+
+app.get("/api/health", async (req, res) => {
+
   try {
-    res.json({
-      status: 'ok',
-      message: 'Backend running successfully',
+
+    return res.status(200).json({
+
+      success: true,
+
+      message: "Backend running successfully",
+
       environment: NODE_ENV,
+
+      aiProvider: "Google Gemini",
+
       timestamp: new Date().toISOString(),
+
     });
+
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-      environment: NODE_ENV,
-      timestamp: new Date().toISOString(),
+
+    return res.status(500).json({
+
+      success: false,
+
+      error: error.message,
+
     });
+
   }
+
 });
 
-// Server info endpoint
-app.get('/api/info', (req, res) => {
-  const aiService = require('./services/ai.service');
-  res.json({
-    name: 'AI Chatbot Backend',
-    version: '2.0.0',
+// ============================================
+// API Info
+// ============================================
+
+app.get("/api/info", (req, res) => {
+
+  return res.status(200).json({
+
+    name: "AI Chatbot Backend",
+
+    version: "2.0.0",
+
     environment: NODE_ENV,
-    provider: aiService.getProvider(),
+
+    provider: "Google Gemini",
+
     port: PORT,
+
     timestamp: new Date().toISOString(),
+
   });
+
 });
 
 // ============================================
 // Error Handling
 // ============================================
+
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(err.status || 500).json({
-    error: err.message || 'Something went wrong!',
-    stack: NODE_ENV === 'development' ? err.stack : undefined,
+
+  console.error("SERVER ERROR:", err);
+
+  return res.status(
+    err.status || 500
+  ).json({
+
+    success: false,
+
+    error:
+      err.message ||
+      "Something went wrong!",
+
   });
+
 });
 
-// 404 Handler
+// ============================================
+// 404
+// ============================================
+
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+
+  return res.status(404).json({
+
+    success: false,
+
+    error: "Endpoint not found",
+
+  });
+
 });
 
 // ============================================
-// Startup
+// START SERVER
 // ============================================
+
 app.listen(PORT, () => {
+
   console.log(`
-✅ Server is running on http://localhost:${PORT}
-📍 API Base URL: http://localhost:${PORT}/api
+✅ Server running on:
+http://localhost:${PORT}
 
-Available Endpoints:
-  • GET  /api/health          - Server health check
-  • GET  /api/info            - Server information
-  • POST /api/chat/generate   - Generate AI response
-  • POST /api/chat/stream     - Stream AI response
-  • GET  /api/chat/health     - AI provider health
+📍 API Base URL:
+http://localhost:${PORT}/api
 
-Conversation Management:
-  • POST   /api/chat/conversations          - Create conversation
-  • GET    /api/chat/conversations          - List conversations
-  • GET    /api/chat/conversations/:id      - Get conversation
-  • POST   /api/chat/conversations/:id/messages - Send message
-  • PUT    /api/chat/conversations/:id      - Rename conversation
-  • DELETE /api/chat/conversations/:id      - Delete conversation
+🚀 Using Google Gemini API
+🤖 Model: model: "gemini-1.5-flash-latest"
+`);
 
-Documentation:
-  • Ollama URL: ${process.env.OLLAMA_URL || 'http://localhost:11434'}
-  • ${process.env.NODE_ENV === 'production' ? 'Production Mode - Using Cloud AI' : 'Development Mode - Using Local Ollama'}
-  `)
 });

@@ -1,11 +1,17 @@
-/**
- * AI CHATBOT CONTROLLER
- * Fully Fixed Version
- */
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-/**
- * Health Check
- */
+// ==========================================
+// GEMINI CONFIGURATION
+// ==========================================
+
+const genAI = new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY
+);
+
+// ==========================================
+// HEALTH CHECK
+// ==========================================
+
 exports.healthCheck = async (req, res) => {
 
   try {
@@ -14,7 +20,8 @@ exports.healthCheck = async (req, res) => {
 
       success: true,
 
-      message: 'AI Chatbot Backend Running',
+      message: "AI Chatbot Backend Running",
+
     });
 
   } catch (error) {
@@ -24,98 +31,111 @@ exports.healthCheck = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Generate Response
- */
+// ==========================================
+// GENERATE RESPONSE
+// ==========================================
+
 exports.generateResponse = async (req, res) => {
 
   try {
 
     const { prompt, message, content } = req.body;
-    
-    // Accept prompt, message, or content field
-    const userInput = prompt || message || content;
 
+    // Accept prompt OR message OR content
+    const userInput =
+      prompt || message || content;
+
+    // Validate Input
     if (!userInput) {
 
       return res.status(400).json({
 
         success: false,
 
-        error: 'Prompt required',
+        error: "Prompt required",
+
       });
+
     }
 
-    // Send request to Ollama
-    const ollamaResponse = await fetch(
+    // ======================================
+    // GEMINI MODEL
+    // ======================================
 
-      'http://127.0.0.1:11434/api/generate',
+    const model = genAI.getGenerativeModel({
+      model: "gemini-pro",
+    });
 
-      {
+    // ======================================
+    // GENERATE AI RESPONSE
+    // ======================================
 
-        method: 'POST',
-
-        headers: {
-          'Content-Type': 'application/json',
-        },
-
-        body: JSON.stringify({
-
-          model: 'phi3',
-
-          prompt: userInput,
-
-          stream: false,
-        }),
-      }
+    const result = await model.generateContent(
+      userInput
     );
 
-    const data = await ollamaResponse.json();
+    const response = result.response.text();
 
-    console.log('OLLAMA RESPONSE:', data);
+    console.log("GEMINI RESPONSE:", response);
+
+    // ======================================
+    // SEND RESPONSE
+    // ======================================
 
     return res.status(200).json({
 
       success: true,
 
-      content:
-        data.response ||
-        'No AI response generated.',
+      content: response,
+
     });
 
   } catch (error) {
 
-    console.error('GENERATE RESPONSE ERROR:', error);
+    console.error(
+      "GENERATE RESPONSE ERROR:",
+      error
+    );
 
     return res.status(500).json({
 
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Stream Response
- */
+// ==========================================
+// STREAM RESPONSE
+// ==========================================
+
 exports.streamResponse = async (req, res) => {
 
   return res.status(200).json({
 
     success: true,
 
-    message: 'Streaming not enabled',
+    message: "Streaming not enabled",
+
   });
+
 };
 
-/**
- * Create Conversation
- */
+// ==========================================
+// CREATE CONVERSATION
+// ==========================================
+
 exports.createConversation = async (req, res) => {
 
   try {
@@ -126,12 +146,15 @@ exports.createConversation = async (req, res) => {
 
       _id: Date.now().toString(),
 
-      title: title || 'New Chat',
+      title: title || "New Chat",
 
       createdAt: new Date().toISOString(),
+
     };
 
-    return res.status(200).json(conversation);
+    return res.status(200).json(
+      conversation
+    );
 
   } catch (error) {
 
@@ -140,13 +163,17 @@ exports.createConversation = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Get Conversations
- */
+// ==========================================
+// GET CONVERSATIONS
+// ==========================================
+
 exports.getConversations = async (req, res) => {
 
   try {
@@ -160,13 +187,17 @@ exports.getConversations = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Get Single Conversation
- */
+// ==========================================
+// GET SINGLE CONVERSATION
+// ==========================================
+
 exports.getConversation = async (req, res) => {
 
   try {
@@ -174,6 +205,7 @@ exports.getConversation = async (req, res) => {
     return res.status(200).json({
 
       messages: [],
+
     });
 
   } catch (error) {
@@ -183,87 +215,95 @@ exports.getConversation = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Send Message
- */
+// ==========================================
+// SEND MESSAGE
+// ==========================================
+
 exports.sendMessage = async (req, res) => {
 
   try {
 
     const { content } = req.body;
 
-    // Check message
+    // Validate Input
     if (!content) {
 
       return res.status(400).json({
 
         success: false,
 
-        error: 'Message content required',
+        error: "Message content required",
+
       });
+
     }
 
-    console.log('USER MESSAGE:', content);
+    console.log("USER MESSAGE:", content);
 
-    // Send message to Ollama
-    const ollamaResponse = await fetch(
+    // ======================================
+    // GEMINI MODEL
+    // ======================================
 
-      'http://127.0.0.1:11434/api/generate',
+    const model = genAI.getGenerativeModel({
 
-      {
+      model: "gemini-pro",
 
-        method: 'POST',
+    });
 
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    // ======================================
+    // GENERATE AI RESPONSE
+    // ======================================
 
-        body: JSON.stringify({
-
-          model: 'phi3',
-
-          prompt: content,
-
-          stream: false,
-        }),
-      }
+    const result = await model.generateContent(
+      content
     );
 
-    // Convert Ollama response
-    const data = await ollamaResponse.json();
+    const response = result.response.text();
 
-    console.log('OLLAMA DATA:', data);
+    console.log("GEMINI RESPONSE:", response);
 
-    // Send response back
+    // ======================================
+    // SEND RESPONSE
+    // ======================================
+
     return res.status(200).json({
 
       success: true,
 
-      content:
-        data.response ||
-        'No AI response generated.',
+      content: response,
+
     });
 
   } catch (error) {
 
-    console.error('SEND MESSAGE ERROR:', error);
+    console.error(
+      "SEND MESSAGE ERROR:",
+      error
+    );
 
     return res.status(500).json({
 
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Rename Conversation
- */
+// ==========================================
+// RENAME CONVERSATION
+// ==========================================
+
 exports.renameConversation = async (req, res) => {
 
   try {
@@ -275,6 +315,7 @@ exports.renameConversation = async (req, res) => {
       success: true,
 
       title,
+
     });
 
   } catch (error) {
@@ -284,13 +325,17 @@ exports.renameConversation = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
 
-/**
- * Delete Conversation
- */
+// ==========================================
+// DELETE CONVERSATION
+// ==========================================
+
 exports.deleteConversation = async (req, res) => {
 
   try {
@@ -299,7 +344,8 @@ exports.deleteConversation = async (req, res) => {
 
       success: true,
 
-      message: 'Conversation deleted',
+      message: "Conversation deleted",
+
     });
 
   } catch (error) {
@@ -309,6 +355,9 @@ exports.deleteConversation = async (req, res) => {
       success: false,
 
       error: error.message,
+
     });
+
   }
+
 };
