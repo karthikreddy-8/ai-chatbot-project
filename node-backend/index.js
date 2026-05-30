@@ -56,9 +56,9 @@ console.log("✅ Gemini API Key Loaded");
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    const isLocal = origin.includes("localhost") || 
-                    origin.includes("127.0.0.1") || 
-                    /^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin);
+    const isLocal = origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      /^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin);
     if (isLocal || process.env.NODE_ENV === "development") {
       return callback(null, true);
     }
@@ -95,10 +95,10 @@ app.use((req, res, next) => {
 // ============================================
 
 const chatRoutes = require("./routes/chat.routes");
-const authRoutes = require("./routes/auth.routes");
+// const authRoutes = require("./routes/auth.routes");
 
 app.use("/api/chat", chatRoutes);
-app.use("/api/auth", authRoutes);
+//app.use("/api/auth", authRoutes);
 
 // ============================================
 // Health Check
