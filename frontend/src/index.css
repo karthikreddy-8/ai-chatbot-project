@@ -23,9 +23,9 @@
   /* ── Neon Colors ──────────────────────────────────────── */
   --neon-purple: #7C3AED;
   --neon-purple-light: #A78BFA;
-  --neon-cyan: #333333;
-  --neon-cyan-light: #555555;
-  --neon-blue: #111111;
+  --neon-cyan: #06B6D4;
+  --neon-cyan-light: #22D3EE;
+  --neon-blue: #3B82F6;
   --neon-pink: #EC4899;
   --neon-green: #10B981;
 
@@ -36,8 +36,8 @@
 
   /* ── Neon Glows ───────────────────────────────────────── */
   --glow-purple: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(124, 58, 237, 0.2);
-  --glow-cyan: 0 0 20px rgba(50, 50, 50, 0.4), 0 0 40px rgba(50, 50, 50, 0.2);
-  --glow-mixed: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(50, 50, 50, 0.2);
+  --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+  --glow-mixed: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
   --glow-purple-strong: 0 0 30px rgba(124, 58, 237, 0.6), 0 0 60px rgba(124, 58, 237, 0.3);
 
   /* ── Layout ───────────────────────────────────────────── */
@@ -553,3 +553,91 @@ body {
   display: none;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE FIXES
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Prevent iOS zoom on input focus (font-size must be >= 16px) */
+@media (max-width: 768px) {
+  textarea,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area padding for notched phones (iPhone X+, Android) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Minimum touch target size (Apple HIG: 44pt, Material: 48dp) */
+button {
+  min-height: 36px;
+  cursor: pointer;
+}
+
+/* Fix h-screen on mobile browsers where 100vh != visual viewport */
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat area takes all remaining height on mobile */
+@media (max-width: 1024px) {
+  .chat-main-area {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* Sidebar: ensure it doesn't push content on mobile */
+@media (max-width: 1024px) {
+  aside {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100% !important;
+    z-index: 50;
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+  .max-w-3xl {
+    max-width: 100% !important;
+  }
+  .max-w-4xl {
+    max-width: 100% !important;
+  }
+  /* Smaller heading on mobile welcome screen */
+  .welcome-heading {
+    font-size: 1.75rem !important;
+  }
+  /* Feature grid 2 columns max on small screens */
+  .feature-grid-mobile {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Smooth tap highlight removal for mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection on buttons */
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}

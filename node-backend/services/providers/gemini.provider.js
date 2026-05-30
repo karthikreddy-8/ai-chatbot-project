@@ -13,7 +13,7 @@ class GeminiProvider {
 
     this.apiKey = apiKey;
     this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models';
-    this.model = 'gemini-pro';
+    this.model = 'gemini-2.0-flash';
     this.client = axios.create({
       timeout: 30000,
     });
@@ -41,7 +41,7 @@ class GeminiProvider {
    * @param {String} model - Model name
    * @returns {Promise<Object>} Response object
    */
-  async generateResponse(messages, model = 'gemini-pro') {
+  async generateResponse(messages, model = 'gemini-2.0-flash') {
     try {
       const contents = this.formatMessagesForGemini(messages);
       const systemInstruction =
@@ -84,7 +84,7 @@ class GeminiProvider {
    * Note: Gemini doesn't support native streaming in this implementation
    * Falls back to regular generation
    */
-  async *streamResponse(messages, model = 'gemini-pro') {
+  async *streamResponse(messages, model = 'gemini-2.0-flash') {
     try {
       const response = await this.generateResponse(messages, model);
       yield {

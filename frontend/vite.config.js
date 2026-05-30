@@ -10,6 +10,7 @@ export default defineConfig({
   ],
 
   server: {
+    host: true,
     proxy: {
 
       // Backend API Proxy

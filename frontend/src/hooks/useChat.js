@@ -86,7 +86,7 @@ export const useChat = () => {
       // ====================================
 
       const response = await api.post(
-        "/api/chat",
+        "/chat/generate",
         {
           prompt: content,
         }

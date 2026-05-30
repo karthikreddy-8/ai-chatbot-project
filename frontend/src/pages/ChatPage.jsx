@@ -89,7 +89,7 @@ export default function ChatPage() {
 
   return (
 
-    <div className="h-screen flex bg-black text-white overflow-hidden">
+    <div className="h-dvh flex bg-black text-white overflow-hidden">
 
       {/* Sidebar */}
       <Sidebar
@@ -104,7 +104,7 @@ export default function ChatPage() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 relative chat-main-area">
 
         {/* Background Glow */}
         <div className="absolute inset-0 pointer-events-none z-0">
@@ -205,7 +205,7 @@ export default function ChatPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-[10px] text-gray-500 text-center pb-2 z-10">
+        <p className="text-[10px] text-gray-500 text-center pb-2 z-10 safe-bottom">
           AI Chat can make mistakes. Verify important information.
         </p>
 

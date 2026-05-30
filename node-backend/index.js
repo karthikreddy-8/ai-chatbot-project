@@ -54,11 +54,16 @@ console.log("✅ Gemini API Key Loaded");
 // ============================================
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000",
-  ],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const isLocal = origin.includes("localhost") || 
+                    origin.includes("127.0.0.1") || 
+                    /^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin);
+    if (isLocal || process.env.NODE_ENV === "development") {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
   credentials: true,
 }));
 

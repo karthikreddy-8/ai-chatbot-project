@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Trash2, Edit3, Check, X,
   LogOut, ChevronLeft, Home, FolderKanban, Compass,
@@ -23,7 +22,6 @@ export default function Sidebar({
   onToggle,
 }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -46,11 +44,11 @@ export default function Sidebar({
   };
 
   const menuItems = [
-    { icon: Home, label: 'Home', action: onNewChat },
-    { icon: FolderKanban, label: 'Projects', action: () => navigate('/projects') },
-    { icon: Compass, label: 'Explore', action: () => {} },
-    { icon: Library, label: 'Library', action: () => navigate('/library') },
-    { icon: Wrench, label: 'AI Tools', action: () => {} },
+    { icon: Home, label: 'Home', action: () => { onNewChat(); if (window.innerWidth < 1024) onToggle(); } },
+    { icon: FolderKanban, label: 'Projects', action: () => { if (window.innerWidth < 1024) onToggle(); } },
+    { icon: Compass, label: 'Explore', action: () => { if (window.innerWidth < 1024) onToggle(); } },
+    { icon: Library, label: 'Library', action: () => { if (window.innerWidth < 1024) onToggle(); } },
+    { icon: Wrench, label: 'AI Tools', action: () => { if (window.innerWidth < 1024) onToggle(); } },
   ];
 
   return (
