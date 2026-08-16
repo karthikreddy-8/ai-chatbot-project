@@ -1,108 +1,102 @@
-import { motion } from 'framer-motion';
-import {
-  Code2, Search, Bug, PenTool, Languages, ImagePlus,
-  FileText, Mic, GraduationCap, Microscope
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../hooks/useAuth';
+import { Cpu, Code2, FileText, GitBranch, Mic, FolderOpen, BookOpen, Image, ArrowRight } from 'lucide-react';
 
-/**
- * WelcomeScreen — Futuristic welcome dashboard with animated heading,
- * AI avatar, and glowing feature cards.
- */
-
-const featureCards = [
-  { icon: Code2, title: 'Coding Assistant', desc: 'Generate, debug & optimize code', color: 'from-violet-500 to-purple-600', glow: 'rgba(124, 58, 237, 0.3)' },
-  { icon: Search, title: 'AI Research', desc: 'Deep research & analysis', color: 'from-blue-500 to-cyan-500', glow: 'rgba(6, 182, 212, 0.3)' },
-  { icon: Bug, title: 'Error Debugging', desc: 'Find & fix bugs instantly', color: 'from-red-500 to-orange-500', glow: 'rgba(239, 68, 68, 0.3)' },
-  { icon: PenTool, title: 'Essay Writing', desc: 'Essays, blogs & content', color: 'from-emerald-500 to-teal-500', glow: 'rgba(16, 185, 129, 0.3)' },
-  { icon: Languages, title: 'Translation', desc: 'Multi-language translation', color: 'from-amber-500 to-yellow-500', glow: 'rgba(245, 158, 11, 0.3)' },
-  { icon: ImagePlus, title: 'Image Generation', desc: 'AI-powered art creation', color: 'from-pink-500 to-rose-500', glow: 'rgba(236, 72, 153, 0.3)' },
-  { icon: FileText, title: 'PDF Chat', desc: 'Upload & chat with PDFs', color: 'from-indigo-500 to-blue-600', glow: 'rgba(99, 102, 241, 0.3)' },
-  { icon: Mic, title: 'Voice Assistant', desc: 'Voice input & responses', color: 'from-cyan-500 to-sky-500', glow: 'rgba(6, 182, 212, 0.3)' },
-  { icon: GraduationCap, title: 'Interview Prep', desc: 'Practice & prepare', color: 'from-purple-500 to-indigo-500', glow: 'rgba(124, 58, 237, 0.3)' },
-  { icon: Microscope, title: 'Deep Research', desc: 'In-depth analysis & insights', color: 'from-teal-500 to-emerald-500', glow: 'rgba(20, 184, 166, 0.3)' },
+const SUGGESTIONS = [
+  { icon: Code2,     text: 'Explain Python generators',      prompt: 'Explain Python generators with examples and use cases' },
+  { icon: GitBranch, text: 'Solve a DP problem',             prompt: 'Teach me how to solve dynamic programming problems with an example' },
+  { icon: Cpu,       text: 'Review my C++ code',             prompt: 'Review my C++ code and suggest improvements' },
+  { icon: BookOpen,  text: 'Explain OS scheduling',          prompt: 'Explain CPU scheduling algorithms: FCFS, SJF, Round Robin with examples' },
+  { icon: FolderOpen,text: 'Build a CRUD project in Node',   prompt: 'Guide me to build a CRUD REST API project using Node.js and Express' },
+  { icon: Mic,       text: 'Prepare me for TCS interview',   prompt: 'Prepare me for a TCS interview: technical questions, aptitude, and HR rounds' },
 ];
 
-export default function WelcomeScreen({ onSuggestionClick }) {
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return { text: 'Good morning', emoji: '☀️' };
+  if (h < 17) return { text: 'Good afternoon', emoji: '🌤️' };
+  return { text: 'Good evening', emoji: '🌙' };
+}
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07 } },
+};
+const chipVariants = {
+  hidden: { opacity: 0, y: 16, scale: 0.95 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+};
+
+export default function WelcomeScreen({ onSuggestionClick, mode }) {
+  const { user } = useAuth();
+  const { text: greeting, emoji } = getGreeting();
+
   return (
-    <div className="w-full flex flex-col items-center justify-center px-4 py-8">
-      {/* Animated AI Avatar */}
+    <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 text-center">
+      {/* Greeting */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, type: 'spring', stiffness: 200 }}
-        className="relative mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-2 mb-10"
       >
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--neon-purple)] to-[var(--neon-cyan)] flex items-center justify-center relative z-10">
-          <span className="text-3xl font-bold text-white font-['Poppins']">AI</span>
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-purple)] flex items-center justify-center shadow-[var(--shadow-glow-blue)] mb-6">
+          <Cpu size={30} className="text-white" />
         </div>
-        <motion.div
-          className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[var(--neon-purple)] to-[var(--neon-cyan)]"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.1, 0.3],
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ filter: 'blur(20px)' }}
-        />
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          {greeting} {emoji}
+        </h1>
+        <p className="text-[var(--text-secondary)] text-base sm:text-lg">
+          Welcome back, <span className="text-[var(--text-primary)] font-semibold">{user?.username?.split(' ')[0] || 'Engineer'}</span>
+        </p>
+        <p className="text-[var(--text-muted)] text-sm">What would you like to learn today?</p>
       </motion.div>
 
-      {/* Heading */}
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-3 font-['Poppins'] tracking-tight"
-      >
-        <span className="text-white">How Can I </span>
-        <span className="gradient-text-mixed">Help You</span>
-        <span className="text-white"> Today?</span>
-      </motion.h1>
-
-      {/* Subtitle */}
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.35 }}
-        className="text-[var(--text-muted)] text-sm md:text-base text-center mb-10 max-w-lg"
-      >
-        Your AI-powered assistant for coding, research, writing, image generation, and more.
-      </motion.p>
-
-      {/* Feature Cards Grid */}
+      {/* Suggestion grid */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 max-w-4xl w-full"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3"
       >
-        {featureCards.map((card, index) => (
+        {SUGGESTIONS.map(chip => (
           <motion.button
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 + index * 0.05 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => onSuggestionClick?.(`Help me with ${card.title.toLowerCase()}`)}
-            className="feature-card p-4 rounded-2xl text-left glass-card group cursor-pointer"
+            key={chip.text}
+            variants={chipVariants}
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            onClick={() => onSuggestionClick(chip.prompt)}
+            className="flex items-center gap-3 p-4 rounded-2xl text-left transition-all duration-200 group"
             style={{
-              boxShadow: `0 0 0 rgba(0,0,0,0)`,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid var(--border-subtle)',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = `0 8px 30px ${card.glow}`;
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'rgba(59,130,246,0.25)';
+              e.currentTarget.style.background = 'rgba(59,130,246,0.05)';
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = `0 0 0 rgba(0,0,0,0)`;
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
             }}
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
-              <card.icon size={18} className="text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/20 to-[var(--brand-purple)]/20 border border-[var(--border-subtle)] flex items-center justify-center shrink-0 group-hover:border-[rgba(59,130,246,0.3)] transition-colors">
+              <chip.icon size={15} className="text-[var(--brand-primary)]" />
             </div>
-            <h3 className="text-xs font-semibold text-white mb-1 font-['Poppins']">{card.title}</h3>
-            <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">{card.desc}</p>
+            <span className="flex-1 text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{chip.text}</span>
+            <ArrowRight size={14} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </motion.button>
         ))}
       </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="mt-8 text-xs text-[var(--text-muted)]"
+      >
+        NexusAI · Powered by Ollama llama3.2 · Press <kbd className="px-1.5 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[10px]">↵</kbd> to send
+      </motion.p>
     </div>
   );
 }

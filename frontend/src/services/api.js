@@ -1,54 +1,31 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const api = axios.create({
-
-  baseURL: 'https://ai-chatbot-project-bn2a.onrender.com/api',
-
-  headers: {
-    'Content-Type': 'application/json',
-  },
-
-  timeout: 120000,
-
+  baseURL: API_BASE_URL,
+  timeout: 60000,
 });
 
 api.interceptors.request.use(
-
   (config) => {
-
-    const token = localStorage.getItem('AI Chat-token');
-
+    const token = localStorage.getItem('image_analyzer_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-
   (error) => Promise.reject(error)
-
 );
 
 api.interceptors.response.use(
-
   (response) => response,
-
   (error) => {
-
     if (error.response?.status === 401) {
-
-      localStorage.removeItem('AI Chat-token');
-
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-
+      localStorage.removeItem('image_analyzer_token');
     }
-
     return Promise.reject(error);
-
   }
-
 );
 
 export default api;

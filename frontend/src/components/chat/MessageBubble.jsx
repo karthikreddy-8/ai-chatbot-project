@@ -1,175 +1,243 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, User, Copy, Check, ThumbsUp, ThumbsDown, Download, Sparkles, Clock } from 'lucide-react';
+import {
+  User, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw,
+  ChevronDown, Sparkles, Clock
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import AnalysisResultBubble from './AnalysisResultBubble';
 
-/**
- * MessageBubble — Styled chat message with avatar, markdown rendering,
- * code blocks, image display, timestamps, and action buttons.
- */
-export default function MessageBubble({ message }) {
+/* ── Code block with language label + copy ── */
+function CodeBlock({ children, className }) {
   const [copied, setCopied] = useState(false);
-  const isUser = message.role === 'user';
+  const language = className?.replace('language-', '') || 'code';
+  const codeStr = String(children).replace(/\n$/, '');
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(message.content);
+  const copy = async () => {
+    await navigator.clipboard.writeText(codeStr);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Format timestamp
-  const formatTime = (date) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  };
-
-  // Check if message contains an image URL
-  const imageMatch = message.content?.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
-  const hasImage = imageMatch && imageMatch[1];
-
-  // Extract text content without the image markdown
-  const textContent = hasImage
-    ? message.content.replace(/!\[.*?\]\(https?:\/\/[^\s)]+\)/, '').trim()
-    : message.content;
-
-  const CodeBlock = ({ children, className }) => {
-    const [codeCopied, setCodeCopied] = useState(false);
-    const language = className?.replace('language-', '') || '';
-    const codeString = String(children).replace(/\n$/, '');
-
-    return (
-      <div className="relative group my-4">
-        {/* Code Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-t-xl bg-[#0D1117] border border-[rgba(124,58,237,0.15)] border-b-0">
-          <span className="text-xs text-[var(--neon-purple-light)] font-mono font-medium">{language || 'code'}</span>
-          <button
-            onClick={async () => {
-              await navigator.clipboard.writeText(codeString);
-              setCodeCopied(true);
-              setTimeout(() => setCodeCopied(false), 2000);
-            }}
-            className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1.5 transition-colors px-2 py-1 rounded-md hover:bg-[rgba(124,58,237,0.1)]"
-          >
-            {codeCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-            {codeCopied ? 'Copied!' : 'Copy'}
-          </button>
+  return (
+    <div className="relative my-4 rounded-xl overflow-hidden border border-[rgba(255,255,255,0.08)] shadow-lg">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#161b22] border-b border-[rgba(255,255,255,0.06)]">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+          </div>
+          <span className="text-xs text-[var(--brand-cyan)] font-mono font-medium ml-1">{language}</span>
         </div>
-        {/* Code Body */}
-        <pre className="!mt-0 !rounded-t-none bg-[#0D1117] p-4 overflow-x-auto text-[13px] leading-relaxed border border-[rgba(124,58,237,0.15)] border-t-0 rounded-b-xl">
-          <code className={className}>{codeString}</code>
-        </pre>
+        <button
+          onClick={copy}
+          className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors px-2 py-1 rounded-md hover:bg-[rgba(255,255,255,0.06)]"
+          aria-label={copied ? 'Copied' : 'Copy code'}
+        >
+          {copied
+            ? <><Check size={12} className="text-[var(--brand-green)]" /> <span className="text-[var(--brand-green)]">Copied!</span></>
+            : <><Copy size={12} /> Copy</>
+          }
+        </button>
       </div>
-    );
+      {/* Code */}
+      <pre className="bg-[#0D1117] p-4 overflow-x-auto text-[13px] leading-relaxed font-mono">
+        <code className={className}>{codeStr}</code>
+      </pre>
+    </div>
+  );
+}
+
+/* ── Main MessageBubble ── */
+export default function MessageBubble({ message, isStreaming }) {
+  const [liked, setLiked] = useState(null); // 'up' | 'down' | null
+  const [copied, setCopied] = useState(false);
+
+  const isUser = message.role === 'user' || message.sender === 'user';
+  const content = message.content || message.text || '';
+  const hasAnalysis = !!message.analysisResult;
+
+  const imageMatch = content?.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+  const hasImage = imageMatch && imageMatch[1];
+  const textContent = hasImage ? content.replace(/!\[.*?\]\(https?:\/\/[^\s)]+\)/, '').trim() : content;
+
+  const copyAll = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatTime = (ts) => {
+    if (!ts) return '';
+    return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
+  /* ── User bubble ── */
+  if (isUser) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="flex justify-end py-2 px-3 md:px-4"
+      >
+        <div className="max-w-[75%] flex items-end gap-2.5">
+          <div className="flex flex-col items-end gap-1">
+            {message.timestamp && (
+              <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 pr-1">
+                <Clock size={10} />{formatTime(message.timestamp)}
+              </span>
+            )}
+            <div
+              className="px-4 py-3 text-sm leading-relaxed text-white font-[450] whitespace-pre-wrap break-words"
+              style={{
+                background: 'linear-gradient(135deg, #1E3A5F, #1D2D50)',
+                borderRadius: '18px 18px 4px 18px',
+                border: '1px solid rgba(59,130,246,0.2)',
+              }}
+            >
+              {content}
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shrink-0">
+            <User size={15} className="text-white" />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  /* ── AI message ── */
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="w-full flex justify-center py-5"
+      className="py-3 px-3 md:px-4"
     >
-      <div className="w-full max-w-3xl flex items-start gap-4 px-4">
+      <div className="max-w-[760px] mx-auto flex items-start gap-3">
         {/* Avatar */}
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-          isUser
-            ? 'bg-gradient-to-br from-indigo-600 to-purple-600'
-            : 'bg-gradient-to-br from-[var(--neon-purple)] to-[var(--neon-cyan)]'
-        }`}
-          style={!isUser ? {
-            boxShadow: '0 0 15px rgba(124, 58, 237, 0.3)',
-          } : {}}
+        <div
+          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-purple)] ${isStreaming ? 'pulse-ring' : ''}`}
+          style={{ boxShadow: '0 0 15px rgba(59,130,246,0.25)' }}
         >
-          {isUser ? <User size={16} className="text-white" /> : <Sparkles size={16} className="text-white" />}
+          <Sparkles size={15} className="text-white" />
         </div>
 
-        {/* Message Content */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-white font-['Poppins']">
-              {isUser ? 'You' : 'AI Chat'}
-            </span>
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Name + time */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">NexusAI</span>
             {message.timestamp && (
-              <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                <Clock size={12} />
-                {formatTime(message.timestamp)}
+              <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+                <Clock size={10} />{formatTime(message.timestamp)}
               </span>
             )}
-          </div>
-
-          {/* Image Display */}
-          {hasImage && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mb-3"
-            >
-              <img
-                src={imageMatch[1]}
-                alt="AI Generated Image"
-                className="chat-image"
-                loading="lazy"
-              />
-              <a
-                href={imageMatch[1]}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs text-[var(--neon-cyan)] bg-[rgba(6,182,212,0.08)] border border-[rgba(6,182,212,0.2)] hover:bg-[rgba(6,182,212,0.15)] transition-all"
-              >
-                <Download size={12} />
-                Download Image
-              </a>
-            </motion.div>
-          )}
-
-          {/* Text Content */}
-          <div className="markdown-content text-[14px] leading-7">
-            {isUser ? (
-              <p className="whitespace-pre-wrap text-[var(--text-secondary)]">{message.content}</p>
-            ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    if (inline) {
-                      return (
-                        <code className="bg-[rgba(124,58,237,0.12)] text-[var(--neon-purple-light)] px-1.5 py-0.5 rounded-md text-[13px] font-mono" {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
-                    return <CodeBlock className={className}>{children}</CodeBlock>;
-                  },
-                }}
-              >
-                {textContent || ''}
-              </ReactMarkdown>
+            {isStreaming && (
+              <span className="text-[10px] text-[var(--brand-cyan)] animate-pulse">● generating</span>
             )}
           </div>
 
-          {/* Action Buttons for AI messages */}
-          {!isUser && (
-            <div className="flex items-center gap-1 mt-2">
-              <button
-                onClick={handleCopy}
-                className="p-1.5 rounded-lg hover:bg-[rgba(124,58,237,0.08)] transition-all text-[var(--text-muted)] hover:text-white"
-                title="Copy response"
+          {/* Content */}
+          {hasAnalysis ? (
+            <AnalysisResultBubble result={message.analysisResult} />
+          ) : (
+            <>
+              {hasImage && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                  <img src={imageMatch[1]} alt="Generated" className="chat-image" loading="lazy" />
+                </motion.div>
+              )}
+              <div className="markdown-content">
+                {isUser ? (
+                  <p className="text-sm">{content}</p>
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        if (inline) {
+                          return (
+                            <code
+                              className="bg-[rgba(139,92,246,0.12)] text-[var(--neon-purple-light)] px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-[rgba(139,92,246,0.15)]"
+                              {...props}
+                            >
+                              {children}
+                            </code>
+                          );
+                        }
+                        return <CodeBlock className={className}>{children}</CodeBlock>;
+                      },
+                      table({ children }) {
+                        return <div className="overflow-x-auto my-4"><table className="w-full text-sm">{children}</table></div>;
+                      },
+                    }}
+                  >
+                    {textContent}
+                  </ReactMarkdown>
+                )}
+                {isStreaming && <span className="streaming-cursor" aria-hidden="true" />}
+              </div>
+            </>
+          )}
+
+          {/* Action row — fades in after streaming complete */}
+          {!isUser && !isStreaming && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-0.5 pt-1"
+            >
+              <ActionBtn
+                onClick={copyAll}
+                aria-label={copied ? 'Copied' : 'Copy response'}
+                title={copied ? 'Copied!' : 'Copy'}
               >
-                {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-              </button>
-              <button className="p-1.5 rounded-lg hover:bg-[rgba(124,58,237,0.08)] transition-all text-[var(--text-muted)] hover:text-white" title="Good response">
-                <ThumbsUp size={14} />
-              </button>
-              <button className="p-1.5 rounded-lg hover:bg-[rgba(124,58,237,0.08)] transition-all text-[var(--text-muted)] hover:text-white" title="Bad response">
-                <ThumbsDown size={14} />
-              </button>
-            </div>
+                {copied ? <Check size={14} className="text-[var(--brand-green)]" /> : <Copy size={14} />}
+              </ActionBtn>
+              <ActionBtn
+                onClick={() => setLiked(liked === 'up' ? null : 'up')}
+                aria-label="Good response"
+                title="Good response"
+                active={liked === 'up'}
+              >
+                <ThumbsUp size={14} className={liked === 'up' ? 'text-[var(--brand-green)] fill-[var(--brand-green)]' : ''} />
+              </ActionBtn>
+              <ActionBtn
+                onClick={() => setLiked(liked === 'down' ? null : 'down')}
+                aria-label="Bad response"
+                title="Bad response"
+                active={liked === 'down'}
+              >
+                <ThumbsDown size={14} className={liked === 'down' ? 'text-[var(--brand-red)] fill-[var(--brand-red)]' : ''} />
+              </ActionBtn>
+              <ActionBtn aria-label="Regenerate response" title="Regenerate">
+                <RefreshCw size={14} />
+              </ActionBtn>
+            </motion.div>
           )}
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function ActionBtn({ children, onClick, active, ...props }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+        active
+          ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
+          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+      }`}
+      {...props}
+    >
+      {children}
+    </button>
   );
 }
